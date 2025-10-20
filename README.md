@@ -292,3 +292,18 @@ if (result < 0) {
 ## 📄 License
 
 Internal project for WeatherTech Solutions.
+
+
+
+
+## build guide:
+
+**Server**
+cd VadretUnderBordet/Server
+make
+./weather_server 8080
+
+**New terminal → Client**
+cd ~/.../VadretUnderBordet/client
+make
+./weather_client 127.0.0.1 8080
