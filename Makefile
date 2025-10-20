@@ -1,54 +1,67 @@
 CC := gcc
-CFLAGS := -g -Wall -Wextra -std=c11 -MMD -MP  -Wno-format-truncation  -Wno-unused-parameter -Wno-unused-function 
+CFLAGS := -g -Wall -Wextra -std=c11 -MMD -MP -Wno-format-truncation -Wno-unused-parameter -Wno-unused-function 
 LFLAGS := -lcurl
 
 # Directories
-SRC_DIR := src
-JANSSON_DIR := src/libs/jansson
+LIBS_DIR := libs
+JANSSON_DIR := libs/jansson
+CLIENT_DIR := client
+SERVER_DIR := server
 BUILD_DIR := build
-CACHE_DIR := cache
-INC_DIR := include
+TMP_DIR := $(BUILD_DIR)/tmp
 
-# Include paths
-CFLAGS += -I$(INC_DIR) -I$(JANSSON_DIR)
+# Include paths for GCC
+CFLAGS += -I$(LIBS_DIR) -I$(JANSSON_DIR)
 
 # Source files
-PROJECT_SRC := $(shell find $(SRC_DIR) -name '*.c' -not -path '$(JANSSON_DIR)/*')
-JANSSON_SRC := $(wildcard $(JANSSON_DIR)/*.c)
-ALL_SRC := $(PROJECT_SRC) $(JANSSON_SRC)
+LIB_SRC := $(shell find $(LIBS_DIR) -name '*.c')
+CLIENT_SRC := $(shell find $(CLIENT_DIR) -name '*.c')
+SERVER_SRC := $(shell find $(SERVER_DIR) -name '*.c')
 
-# Object files
-PROJECT_OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(PROJECT_SRC))
-JANSSON_OBJ := $(patsubst $(JANSSON_DIR)/%.c,$(BUILD_DIR)/jansson/%.o,$(JANSSON_SRC))
-OBJ := $(PROJECT_OBJ) $(JANSSON_OBJ)
+# Object files in temp
+LIB_OBJ := $(patsubst %.c,$(TMP_DIR)/%.o,$(LIB_SRC))
+CLIENT_OBJ := $(patsubst %.c,$(TMP_DIR)/%.o,$(CLIENT_SRC)) $(LIB_OBJ)
+SERVER_OBJ := $(patsubst %.c,$(TMP_DIR)/%.o,$(SERVER_SRC)) $(LIB_OBJ)
 
-# Dependency files
-DEP := $(OBJ:.o=.d)
+# Dependency files in temp
+DEP := $(LIB_OBJ:.o=.d) $(CLIENT_OBJ:.o=.d) $(SERVER_OBJ:.o=.d)
 
-# Final executable
-BIN := $(BUILD_DIR)/weatherapi
+# Final compiled output path
+CLIENT_BIN := $(BUILD_DIR)/client
+SERVER_BIN := $(BUILD_DIR)/server
 
-all: $(BIN)
+all: client server
 
-$(BIN): $(OBJ)
+client: $(CLIENT_BIN)
+server: $(SERVER_BIN)
+
+# Compile all client .o files
+$(CLIENT_BIN): $(CLIENT_OBJ)
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-# Rule for project source files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+# Compile all server .o files
+$(SERVER_BIN): $(SERVER_OBJ)
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+# Generic object build rule
+$(TMP_DIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Rule for jansson source files
-$(BUILD_DIR)/jansson/%.o: $(JANSSON_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+run:
+	@echo "Usage: make run-client OR make run-server";
 
-run: $(BIN)
-	./$(BIN)
+run-client: $(CLIENT_BIN)
+	./$(CLIENT_BIN)
+
+run-server: $(SERVER_BIN)
+	./$(SERVER_BIN)
 
 clean:
-	$(RM) -rf $(BUILD_DIR) $(CACHE_DIR)
+	$(RM) -rf $(TMP_DIR)
 
 -include $(DEP)
 
-.PHONY: all run clean
+.PHONY: all

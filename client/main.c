@@ -7,3 +7,8 @@
 // GetWeather("Stockholm")
 // Få svar från servern
 // Loopen börjar om
+
+int main()
+{
+    return 0;
+}
