@@ -32,7 +32,7 @@ struct weather_t {
 // Basic functions
 int write_weather_to_file(const weather_t* w, const char* filename);
 int load_weather_from_file(weather_t* w, const char* filename);
-int parse_weather_string(const weather_t* w, char* buffer, size_t bufferSize);
+int string_to_weather(const weather_t* w, char* buffer, size_t bufferSize);
 int weather_to_string(const char* data, weather_t* w);
 int weather_print(const weather_t* w);
 
