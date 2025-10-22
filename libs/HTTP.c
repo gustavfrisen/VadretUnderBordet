@@ -159,7 +159,7 @@ void HTTPRequest_Dispose(HTTPRequest** req)
         HTTPRequest* request = *req;
         free((void*)request->URL);
         LinkedList_dispose(&request->Headers, free_header);
-        free((void*)request);
+        free(request);
         *req = NULL;
     }
 }
