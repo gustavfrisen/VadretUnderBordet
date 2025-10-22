@@ -24,6 +24,11 @@ const char* cities_list = 	"Stockholm:59.3293:18.0686\n"
 							"Luleå:65.5848:22.1567\n"
 							"Kiruna:67.8558:20.2253\n";
 
+int cities_load_from_disk(cities_t* cities);
+int cities_load_from_string_list(cities_t* cities);
+int cities_save_to_disk(cities_t* cities);
+int cities_add_city(cities_t* cities, city_t* city);
+
 int cities_init(cities_t **cities_ptr)
 {
     *cities_ptr = malloc(sizeof(cities_t));
