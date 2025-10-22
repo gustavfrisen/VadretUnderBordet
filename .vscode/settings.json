@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "weather.h": "c",
+        "cities.h": "c",
+        "jansson.h": "c",
+        "linked_list.h": "c"
+    }
+}

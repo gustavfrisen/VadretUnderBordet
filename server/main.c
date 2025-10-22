@@ -1,24 +1,18 @@
-// Läs in grundläggande städer
-// Börja lyssna efter förfrågan från klienter
-// Hitta stad, hämta väder, returnera svar
+#include <stdio.h>
+#include <stdlib.h>
+#include "cities.h"
 
 int main()
 {
-    // LoadCities();
-    // TCP_INIT();
-    // while {
-    //  listen();
-    //  HTTP_parse();
-    //  switch {
-    //    case func1:
-    //      func1();
-    //    case func2:
-    //      func2();
-    //    case func3:
-    //      func3();
-    //   }
-    // Skicka tillbaks http formaterat meddelande
-    // }
+    printf("\nMain started...\n");
 
+    cities_t* cities = NULL;
+    cities_init(&cities);
+    //cities_print(&cities);
+
+    printf("elements in cities: %ld\n", cities->list.size);
+    //printf("city name of first element: %s\n", ((city_t*)cities->list.head->item)->name);
+
+    printf("Main ended...\n\n");
     return 0;
 }

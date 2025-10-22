@@ -8,7 +8,7 @@ typedef struct city_t
 	float longitude;
 } city_t;
 
-int city_init(const char* _name, float _latitude, float _longitude, city_t** _cityPtr);
+int city_init(const char* _Name, const char* _Latitude, const char* _Longitude, city_t** _CityPtr);
 void city_dispose(city_t** _cityPtr);
 
 #endif
