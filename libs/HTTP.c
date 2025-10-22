@@ -38,28 +38,32 @@ ProtocolVersion Enum_Protocol(const char* protocol)
     return Protocol_Unknown;
 }
 
+// Parse a request from Client -> Server
 HTTPRequest* ParseRequest(const char* message)
 {
     HTTPRequest* request = calloc(1, sizeof(HTTPRequest));
     request->reason = MalformedRequest;
+    request->Headers = LinkedList_create();
 
     int state = 0;
 
     const char* start = message;
-    while(start && *start)
+    int finalLoop = 0;
+    while(start && *start && !finalLoop)
     {
         // Find end of line
         const char* end = strstr(start, "\r\n");
         if(!end)
         {
-            printf("Did not find another line separator.\n");
-            break;
+            // No separator found, read to end of message and do not loop again
+            finalLoop = 1;
+            end = message + strlen(message);
         }
         // Check length with pointer math
         int length = end - start;
         if(length == 0)
         {
-            printf("Reached end of request.\n");
+            printf("Reached end of request.\n\n");
             break;
         }
         // Allocate memory for current line
@@ -79,7 +83,7 @@ HTTPRequest* ParseRequest(const char* message)
             }
             if(count != 2)
             {
-                printf("INVALID: Request is not formatted with 2 spaces.\n");
+                printf("INVALID: Request is not formatted with 2 spaces.\n\n");
                 free(current_line);
                 break;
             }
@@ -89,7 +93,7 @@ HTTPRequest* ParseRequest(const char* message)
 
             if(space2 - (space1 + 1) >= MAX_URL_LEN)
             {
-                printf("INVALID: Request URL is too long\n");
+                printf("INVALID: Request URL is too long\n\n");
                 request->reason = URLTooLong;
                 free(current_line);
                 break;
@@ -104,19 +108,33 @@ HTTPRequest* ParseRequest(const char* message)
 
             request->method = Enum_Method(method);
             request->protocol = Enum_Protocol(protocol);
-
-            snprintf(request->URL, MAX_URL_LEN, "%s", path);
+            request->URL = path;
 
             free(method);
-            free(path);
             free(protocol);
 
             request->valid = 1;
+            request->reason = NotInvalid;
             state = 1; // jump to header parsing
         } else {
-            printf("Header support incomplete.\n\n");
-            free(current_line);
-            break;
+            const char* sep = strpbrk(current_line, ": ");
+            if(!sep)
+            {
+                printf("INVALID: Header is malformed.\n\n");
+                free(current_line);
+                break;
+            }
+
+            char* name = substr(current_line, sep);
+            if(!name) { free(current_line); break; }
+            char* value = substr(sep + 2, current_line + length);
+            if(!value) { free(current_line); break; }
+
+            HTTPHeader* header = calloc(1, sizeof(HTTPHeader));
+            header->Name = name;
+            header->Value = value;
+
+            LinkedList_append(request->Headers, header);
         }
 
         start = end + 2;
@@ -124,4 +142,24 @@ HTTPRequest* ParseRequest(const char* message)
     }
 
     return request;
+}
+
+void free_header(void* context)
+{
+    HTTPHeader* hdr = (HTTPHeader*)context;
+    free((void*)hdr->Name);
+    free((void*)hdr->Value);
+}
+
+// Properly dispose a HTTPRequest struct
+void HTTPRequest_Dispose(HTTPRequest** req)
+{
+    if(req && *req)
+    {
+        HTTPRequest* request = *req;
+        free((void*)request->URL);
+        LinkedList_dispose(&request->Headers, free_header);
+        free((void*)request);
+        *req = NULL;
+    }
 }
