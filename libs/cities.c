@@ -239,9 +239,18 @@ int cities_sort_by_name(cities_t *cities)
     return 0;
 }
 
-int cities_sort_by_distance(cities_t *cities, float latitude, float longitude)
+int cities_sort_by_distance(cities_t *cities, const char *city_name)
 {
-    if (!cities) return -1;
+    if (!cities || !city_name) return -1;
+
+    // Find the reference city
+    city_t *ref_city = NULL;
+    if (cities_get_city_by_name(cities, city_name, &ref_city) != 0 || !ref_city) {
+        return -1; // City not found
+    }
+
+    float latitude = ref_city->latitude;
+    float longitude = ref_city->longitude;
 
     Node *i, *j;
     for (i = cities->list.head; i != NULL; i = i->front) {
@@ -302,12 +311,13 @@ int cities_print_pretty(cities_t *cities)
     return 0;
 }
 
-int cities_reset(cities_t *cities)
-{
-    return 0;
-}
-
 int cities_dispose(cities_t **cities_ptr)
 {
+    if (!cities_ptr || !*cities_ptr) return -1;
+    
+    cities_t *cities = *cities_ptr;
+    LinkedList_dispose(&cities->list, free);
+    free(cities);
+    *cities_ptr = NULL;
     return 0;
 }

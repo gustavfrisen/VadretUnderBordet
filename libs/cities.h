@@ -22,12 +22,11 @@ int cities_get_city_by_name(cities_t* cities, const char* name, city_t** city_pt
 int cities_get_city_by_index(cities_t* cities, int index, city_t** city_ptr);
 
 int cities_sort_by_name(cities_t* cities);
-int cities_sort_by_distance(cities_t* cities, float latitude, float longitude);
+int cities_sort_by_distance(cities_t *cities, const char *city_name);
 
 int cities_print(cities_t* cities);
 int cities_print_pretty(cities_t* cities);
 
-int cities_reset(cities_t* cities);
 int cities_dispose(cities_t** cities_ptr);
 
 #endif

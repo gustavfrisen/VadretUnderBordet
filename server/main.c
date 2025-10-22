@@ -8,7 +8,7 @@ int main()
 
     cities_t* cities = NULL;
     cities_init(&cities);
-    cities_print_pretty(cities);
+    cities_print(cities);
 
     printf("Main ended...\n\n");
     return 0;
