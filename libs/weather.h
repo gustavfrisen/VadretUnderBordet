@@ -30,7 +30,7 @@ typedef struct {
 } weather_t;
 
 // Memory management
-weather_t* weather_create(void);
+weather_t* weather_init(void);
 int weather_free(weather_t* w);
 int weather_reset(weather_t* w);  // sets all fields to 0 or NULL
 
