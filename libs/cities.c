@@ -35,9 +35,9 @@ int cities_init(cities_t **cities_ptr)
 
     create_folder("cities"); // ensure the directory exists
 
-    cities_load_from_disk(cities);
+    //cities_load_from_disk(cities);
     cities_load_from_string_list(cities);
-    //cities_save_to_disk(cities);
+    cities_save_to_disk(cities);
 
     return 0;
 }
@@ -130,6 +130,30 @@ int cities_load_from_string_list(cities_t *cities)
 
 int cities_save_to_disk(cities_t *cities)
 {
+    if (!cities) return -1;
+
+    Node *node = cities->list.head;
+    while (node) {
+        city_t *city = (city_t *)node->item;
+        if (city && city->name) {
+            char filepath[256];
+            snprintf(filepath, sizeof(filepath), "cities/%s.json", city->name);
+            FILE *file = fopen(filepath, "w");
+            if (file) {
+                json_t *city_json = json_object();
+                json_object_set_new(city_json, "name", json_string(city->name));
+                json_object_set_new(city_json, "latitude", json_real(city->latitude));
+                json_object_set_new(city_json, "longitude", json_real(city->longitude));
+                char *json_str = json_dumps(city_json, JSON_INDENT(4));
+                fprintf(file, "%s", json_str);
+                free(json_str);
+                json_decref(city_json);
+                fclose(file);
+            }
+        }
+        node = node->front;
+    }
+
     return 0;
 }
 
