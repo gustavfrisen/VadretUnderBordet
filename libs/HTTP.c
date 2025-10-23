@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "HTTP.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +45,7 @@ HTTPRequest* ParseRequest(const char* message)
 {
     HTTPRequest* request = calloc(1, sizeof(HTTPRequest));
     request->reason = MalformedRequest;
-    request->Headers = LinkedList_create();
+    request->headers = LinkedList_create();
 
     int state = 0;
 
@@ -63,7 +65,7 @@ HTTPRequest* ParseRequest(const char* message)
         int length = end - start;
         if(length == 0)
         {
-            printf("Reached end of request.\n\n");
+            //printf("Reached end of request.\n\n");
             break;
         }
         // Allocate memory for current line
@@ -131,10 +133,12 @@ HTTPRequest* ParseRequest(const char* message)
             if(!value) { free(current_line); break; }
 
             HTTPHeader* header = calloc(1, sizeof(HTTPHeader));
-            header->Name = name;
-            header->Value = value;
-
-            LinkedList_append(request->Headers, header);
+            if(header != NULL)
+            {
+                header->Name = name;
+                header->Value = value;
+                LinkedList_append(request->headers, header);
+            }
         }
 
         start = end + 2;
@@ -158,8 +162,83 @@ void HTTPRequest_Dispose(HTTPRequest** req)
     {
         HTTPRequest* request = *req;
         free((void*)request->URL);
-        LinkedList_dispose(&request->Headers, free_header);
+        LinkedList_dispose(&request->headers, free_header);
         free(request);
         *req = NULL;
     }
+}
+
+HTTPResponse* HTTPResponse_init(ResponseCode code, const char* body)
+{
+    HTTPResponse* response = calloc(1, sizeof(HTTPResponse));
+    response->responseCode = code;
+    response->body = body;
+    response->headers = LinkedList_create();
+
+    return response;
+}
+
+int HTTPResponse_add_header(HTTPResponse* response, const char* name, const char* value)
+{
+    if(response->headers == NULL) return 0;
+    HTTPHeader* header = calloc(1, sizeof(HTTPHeader));
+    if(header == NULL) return 0;
+    header->Name = strdup(name);
+    if(header->Name == NULL) return 0;
+    header->Value = strdup(value);
+    if(header->Value == NULL) return 0;
+    return LinkedList_append(response->headers, header);
+}
+
+const char* CommonResponseMessages(ResponseCode code) {
+    switch (code) {
+        case 200: return "OK";
+        case 301: return "Moved Permanently";
+        case 302: return "Found";
+        case 304: return "Not Modified";
+        case 400: return "Bad Request";
+        case 401: return "Unauthorized";
+        case 403: return "Forbidden";
+        case 404: return "Not Found";
+        case 405: return "Method Not Allowed";
+        case 500: return "Internal Server Error";
+        case 501: return "Not Implemented";
+        case 503: return "Service Unavailable";
+        default:  return "";
+    }
+}
+
+const char* HTTPResponse_tostring(HTTPResponse** sourceResponse)
+{
+    HTTPResponse* response = *sourceResponse;
+    const char* message = CommonResponseMessages(response->responseCode);
+    // Count size of everything before allocating
+    // 5 = 2 spaces + response code (3 digits) + null term
+    int messageSize = 6 + strlen(HTTP_VERSION) + strlen(message);
+    if(response->headers != NULL)
+    {
+        LinkedList_foreach(response->headers, node)
+        {
+            HTTPHeader* hdr = (HTTPHeader*)node->item;
+            messageSize += 4 + strlen(hdr->Name) + strlen(hdr->Value); // 4 = \r\n and symbols between name & value
+        }
+    }
+    messageSize += 4 + strlen(response->body); // 4 = \r\n\r\n
+    //printf("We have to allocate %i bytes.\n",messageSize);
+    char* status = malloc(messageSize);
+    // write first line
+    int curPos = snprintf(status, messageSize, "%s %d %s", HTTP_VERSION, response->responseCode, message);
+    // write headers
+    LinkedList_foreach(response->headers, node)
+    {
+        HTTPHeader* hdr = (HTTPHeader*)node->item;
+        int written = snprintf(&status[curPos], messageSize-curPos, "\r\n%s: %s", hdr->Name, hdr->Value);
+        curPos += written;
+    }
+    // write body
+    snprintf(&status[curPos], messageSize-curPos, "\r\n\r\n%s", response->body);
+
+    LinkedList_dispose(&response->headers, free_header);
+    free(response);
+    return status;
 }
