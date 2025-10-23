@@ -1,0 +1,22 @@
+# Simple Makefile for state machine library and example
+CC=gcc
+CFLAGS=-Wall -Wextra -std=c99 -g
+LDFLAGS=
+
+# Target for state machine example
+state_machine_example: state_machine_example.c state_machine.c state_machine.h
+	$(CC) $(CFLAGS) -o state_machine_example state_machine_example.c state_machine.c $(LDFLAGS)
+
+# Target for state machine library only (object file)
+state_machine.o: state_machine.c state_machine.h
+	$(CC) $(CFLAGS) -c state_machine.c -o state_machine.o
+
+# Clean target
+clean:
+	rm -f state_machine_example state_machine.o
+
+# Test target to run the example
+test: state_machine_example
+	./state_machine_example
+
+.PHONY: clean test
