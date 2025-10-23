@@ -241,20 +241,8 @@ Any FAILURE can go to `STATE_ERROR`, which either `EVENT_RETRY` back to `STATE_I
 
 ---
 
-## Tips for success
-
-- Keep states small: do one thing per state.
-- Always return a clear event based on the outcome (SUCCESS/FAILURE/RETRY).
-- Log transitions (already included) — they make debugging 10x easier.
-- Only add fields to the context when you actually need them.
-- Start with a minimal path working, then layer in more states.
-
----
-
 ## Where to plug in your project code
 
 - TCP: `tcp_listen`, `tcp_accept`, `tcp_connect`, `read`, `write` from `libs/TCP.c`.
 - HTTP: `http_parse_request`, `http_build_response` from `libs/HTTP.c`.
 - Data: functions for loading cities, formatting responses, etc.
-
-If you want, I can help wire the server states to your existing TCP/HTTP functions and test them in WSL.
