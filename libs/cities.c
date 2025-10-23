@@ -38,7 +38,7 @@ int cities_init(cities_t **cities_ptr)
 
     memset(&cities->list, 0, sizeof(LinkedList));
 
-    create_folder("cities"); // ensure the directory exists
+    create_folder("cities_cache"); // ensure the directory exists
 
     cities_load_from_disk(cities);
     cities_load_from_string_list(cities);
@@ -51,7 +51,7 @@ int cities_init(cities_t **cities_ptr)
 int cities_load_from_disk(cities_t *cities)
 {
     tinydir_dir dir;
-    const char* folder_path = "cities";
+    const char* folder_path = "cities_cache";
 
     if (tinydir_open(&dir, folder_path) == -1)
     {
@@ -164,7 +164,7 @@ int cities_save_to_disk(cities_t *cities)
         city_t *city = (city_t *)node->item;
         if (city && city->name) {
             char filepath[256];
-            snprintf(filepath, sizeof(filepath), "cities/%s.json", city->name);
+            snprintf(filepath, sizeof(filepath), "cities_cache/%s.json", city->name);
             FILE *file = fopen(filepath, "w");
             if (file) {
                 json_t *city_json = json_object();
@@ -321,7 +321,7 @@ int cities_dispose(cities_t **cities_ptr)
     if (!cities_ptr || !*cities_ptr) return -1;
     
     cities_t *cities = *cities_ptr;
-    LinkedList_dispose(&cities->list, free);
+    LinkedList_clear(&cities->list, free);
     free(cities);
     *cities_ptr = NULL;
     return 0;

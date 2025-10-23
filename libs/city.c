@@ -40,3 +40,17 @@ int city_init(const char* _Name, const char* _Latitude, const char* _Longitude, 
 
 	return 0;
 }
+
+void city_dispose(city_t **_cityPtr)
+{
+	if(_cityPtr == NULL || *_cityPtr == NULL)
+		return;
+
+	city_t* _City = *_cityPtr;
+
+	if(_City->name != NULL)
+		free(_City->name);
+
+	free(_City);
+	*_cityPtr = NULL;
+}
