@@ -13,7 +13,7 @@ int main()
     HTTPRequest* req = ParseRequest(demoRequest);
 
     printf("Request valid: %i\n",req->valid);
-    printf("Invalid reason: %i\n",req->reason);
+    printf("Reason invalid: %i\n",req->reason);
     if(req->valid)
     {
         printf("Method: %i\n",req->method);
@@ -21,14 +21,10 @@ int main()
         printf("URL: %s\n\n",req->URL);
 
         printf("Total headers (%lu):\n",req->Headers->size);
-        Node* item = req->Headers->head;
-        while(item)
-        {
+        LinkedList_foreach(req->Headers, item) {
             HTTPHeader* hdr = (HTTPHeader*)item->item;
             printf("%s = %s\n", hdr->Name, hdr->Value);
-            
-            item = item->front;
-        }
+        };
     }
 
     HTTPRequest_Dispose(&req);

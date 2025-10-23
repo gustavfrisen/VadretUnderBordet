@@ -60,4 +60,14 @@ void LinkedList_clear(LinkedList *list, void (*free_function)(void *));
 */
 void LinkedList_dispose(LinkedList **list, void (*free_function)(void *));
 
+/*
+  Easily loop through all nodes in a LinkedList
+  Usage:
+  LinkedList_foreach(list, node) {
+    // Here you have access to node and can write code
+  }
+*/
+#define LinkedList_foreach(list, node) \
+    for (Node *node = (list)->head; node != NULL; node = node->front)
+
 #endif
