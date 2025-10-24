@@ -190,6 +190,22 @@ int cities_add_city(cities_t *cities, city_t *city)
     return 0;
 }
 
+int cities_remove_city(cities_t *cities, const char *name)
+{
+    if (!cities || !name) return -1;
+    Node *node = cities->list.head;
+    while (node) {
+        Node *next = node->front;
+        city_t *city = (city_t *)node->item;
+        if (city && city->name && strcmp(city->name, name) == 0) {
+            LinkedList_remove(&cities->list, node, free);
+            return 0;
+        }
+        node = next;
+    }
+    return -1;
+}
+
 int cities_get_city_by_name(cities_t *cities, const char *name, city_t **city_ptr)
 {
     if (!cities || !name) return -1;

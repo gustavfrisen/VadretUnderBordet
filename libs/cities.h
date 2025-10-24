@@ -25,6 +25,30 @@ typedef struct cities_t
 int cities_init(cities_t** cities_ptr);
 
 /**
+ * @brief Add a city to the cities collection
+ * 
+ * Appends a city_t object to the linked list of cities.
+ * The city object should be properly initialized before adding.
+ * 
+ * @param cities Pointer to the cities collection
+ * @param city Pointer to the city_t object to add
+ * @return 0 on success, -1 on error
+ */
+int cities_add_city(cities_t* cities, city_t* city);
+
+/**
+ * @brief Remove a city from the collection by name
+ * 
+ * Searches for a city with the specified name and removes it from
+ * the collection. Also frees the memory associated with the city.
+ * 
+ * @param cities Pointer to the cities collection
+ * @param name Name of the city to remove
+ * @return 0 if city found and removed, -1 if not found or on error
+ */
+int cities_remove_city(cities_t* cities, const char* name);
+
+/**
  * @brief Find a city by its name
  * 
  * @param cities Pointer to the cities collection
