@@ -48,6 +48,19 @@ typedef struct {
 int weather_get(const char* city_name, weather_t* w);
 
 /**
+ * @brief Save weather struct to JSON file in cache directory
+ * 
+ * Creates a JSON file in weather_cache/<cityName>.json with all weather data.
+ * The file is formatted with indentation for readability.
+ * Creates the weather_cache directory if it doesn't exist.
+ * 
+ * @param cityName Name of the city (used as filename)
+ * @param w Pointer to weather_t struct to save
+ * @return 0 on success, -1 on error
+ */
+int weather_to_json(const char* cityName, const weather_t* w);
+
+/**
  * @brief Parse JSON string and populate weather struct
  * 
  * Takes a JSON string buffer and parses it into the weather_t structure.
@@ -72,31 +85,6 @@ int string_to_weather(weather_t* w, const char* buffer, size_t bufferSize);
  * @return 0 on success, -1 if buffer too small or on error
  */
 int weather_to_string(const weather_t* w, char* buffer, size_t bufferSize);
-
-/**
- * @brief Parse jansson json_t object into weather struct
- * 
- * Extracts all fields from a jansson JSON object and populates
- * the weather_t structure. Handles nested objects for units and current weather.
- * 
- * @param json Pointer to jansson json_t object
- * @param w Pointer to weather_t struct to populate
- * @return 0 on success, -1 on error
- */
-int weather_from_json(json_t* json, weather_t* w);
-
-/**
- * @brief Save weather struct to JSON file in cache directory
- * 
- * Creates a JSON file in weather_cache/<cityName>.json with all weather data.
- * The file is formatted with indentation for readability.
- * Creates the weather_cache directory if it doesn't exist.
- * 
- * @param cityName Name of the city (used as filename)
- * @param w Pointer to weather_t struct to save
- * @return 0 on success, -1 on error
- */
-int weather_to_json(const char* cityName, const weather_t* w);
 
 /**
  * @brief Check if weather data is stale

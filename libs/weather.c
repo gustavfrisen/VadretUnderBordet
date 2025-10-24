@@ -3,6 +3,8 @@
 #include "weather.h"
 #include "utils.h"
 
+int weather_from_json(json_t *json, weather_t *w);
+
 int weather_get(const char *city_name, weather_t *w)
 {
     create_folder("weather_cache");
@@ -31,83 +33,6 @@ int weather_get(const char *city_name, weather_t *w)
 
         json_decref(city_json);
     }
-    
-    return 0;
-}
-
-int string_to_weather(weather_t *w, const char *buffer, size_t bufferSize)
-{
-    if (!w || !buffer || bufferSize == 0) return -1;
-
-    json_error_t error;
-    json_t* json = json_loads(buffer, 0, &error);
-    
-    if (!json) {
-        fprintf(stderr, "Error parsing JSON string: %s\n", error.text);
-        return -1;
-    }
-
-    int result = weather_from_json(json, w);
-    json_decref(json);
-    
-    return result;
-}
-
-int weather_to_string(const weather_t *w, char *buffer, size_t bufferSize)
-{
-    if (!w || !buffer || bufferSize == 0) return -1;
-
-    // Build the JSON structure
-    json_t* root = json_object();
-    
-    // Top-level fields
-    json_object_set_new(root, "latitude", json_real(w->latitude));
-    json_object_set_new(root, "longitude", json_real(w->longitude));
-    json_object_set_new(root, "generationtime_ms", json_real(w->generationtime_ms));
-    json_object_set_new(root, "utc_offset_seconds", json_integer(w->utc_offset_seconds));
-    json_object_set_new(root, "timezone", json_string(w->timezone ? w->timezone : ""));
-    json_object_set_new(root, "timezone_abbreviation", json_string(w->timezone_abbreviation ? w->timezone_abbreviation : ""));
-    json_object_set_new(root, "elevation", json_real(w->elevation));
-
-    // current_weather_units object
-    json_t* units = json_object();
-    json_object_set_new(units, "time", json_string(w->unit_time ? w->unit_time : ""));
-    json_object_set_new(units, "interval", json_string(w->unit_interval ? w->unit_interval : ""));
-    json_object_set_new(units, "temperature", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
-    json_object_set_new(units, "windspeed", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
-    json_object_set_new(units, "winddirection", json_string(w->unit_winddirection ? w->unit_winddirection : ""));
-    json_object_set_new(units, "is_day", json_string(w->unit_is_day ? w->unit_is_day : ""));
-    json_object_set_new(units, "weathercode", json_string(w->unit_weathercode ? w->unit_weathercode : ""));
-    json_object_set_new(root, "current_weather_units", units);
-
-    // current_weather object
-    json_t* current = json_object();
-    json_object_set_new(current, "time", json_string(w->time ? w->time : ""));
-    json_object_set_new(current, "interval", json_integer(w->interval));
-    json_object_set_new(current, "temperature", json_real(w->temperature));
-    json_object_set_new(current, "windspeed", json_real(w->windspeed));
-    json_object_set_new(current, "winddirection", json_integer(w->winddirection));
-    json_object_set_new(current, "is_day", json_integer(w->is_day));
-    json_object_set_new(current, "weathercode", json_integer(w->weathercode));
-    json_object_set_new(root, "current_weather", current);
-
-    // Convert to string
-    char* json_str = json_dumps(root, JSON_INDENT(4));
-    json_decref(root);
-    
-    if (!json_str) return -1;
-    
-    // Check if buffer is large enough
-    size_t json_len = strlen(json_str);
-    if (json_len >= bufferSize) {
-        free(json_str);
-        return -1;
-    }
-    
-    // Copy to buffer
-    strncpy(buffer, json_str, bufferSize - 1);
-    buffer[bufferSize - 1] = '\0';
-    free(json_str);
     
     return 0;
 }
@@ -280,6 +205,83 @@ int weather_to_json(const char* cityName, const weather_t* w)
     }
 
     json_decref(root);
+    return 0;
+}
+
+int string_to_weather(weather_t *w, const char *buffer, size_t bufferSize)
+{
+    if (!w || !buffer || bufferSize == 0) return -1;
+
+    json_error_t error;
+    json_t* json = json_loads(buffer, 0, &error);
+    
+    if (!json) {
+        fprintf(stderr, "Error parsing JSON string: %s\n", error.text);
+        return -1;
+    }
+
+    int result = weather_from_json(json, w);
+    json_decref(json);
+    
+    return result;
+}
+
+int weather_to_string(const weather_t *w, char *buffer, size_t bufferSize)
+{
+    if (!w || !buffer || bufferSize == 0) return -1;
+
+    // Build the JSON structure
+    json_t* root = json_object();
+    
+    // Top-level fields
+    json_object_set_new(root, "latitude", json_real(w->latitude));
+    json_object_set_new(root, "longitude", json_real(w->longitude));
+    json_object_set_new(root, "generationtime_ms", json_real(w->generationtime_ms));
+    json_object_set_new(root, "utc_offset_seconds", json_integer(w->utc_offset_seconds));
+    json_object_set_new(root, "timezone", json_string(w->timezone ? w->timezone : ""));
+    json_object_set_new(root, "timezone_abbreviation", json_string(w->timezone_abbreviation ? w->timezone_abbreviation : ""));
+    json_object_set_new(root, "elevation", json_real(w->elevation));
+
+    // current_weather_units object
+    json_t* units = json_object();
+    json_object_set_new(units, "time", json_string(w->unit_time ? w->unit_time : ""));
+    json_object_set_new(units, "interval", json_string(w->unit_interval ? w->unit_interval : ""));
+    json_object_set_new(units, "temperature", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
+    json_object_set_new(units, "windspeed", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
+    json_object_set_new(units, "winddirection", json_string(w->unit_winddirection ? w->unit_winddirection : ""));
+    json_object_set_new(units, "is_day", json_string(w->unit_is_day ? w->unit_is_day : ""));
+    json_object_set_new(units, "weathercode", json_string(w->unit_weathercode ? w->unit_weathercode : ""));
+    json_object_set_new(root, "current_weather_units", units);
+
+    // current_weather object
+    json_t* current = json_object();
+    json_object_set_new(current, "time", json_string(w->time ? w->time : ""));
+    json_object_set_new(current, "interval", json_integer(w->interval));
+    json_object_set_new(current, "temperature", json_real(w->temperature));
+    json_object_set_new(current, "windspeed", json_real(w->windspeed));
+    json_object_set_new(current, "winddirection", json_integer(w->winddirection));
+    json_object_set_new(current, "is_day", json_integer(w->is_day));
+    json_object_set_new(current, "weathercode", json_integer(w->weathercode));
+    json_object_set_new(root, "current_weather", current);
+
+    // Convert to string
+    char* json_str = json_dumps(root, JSON_INDENT(4));
+    json_decref(root);
+    
+    if (!json_str) return -1;
+    
+    // Check if buffer is large enough
+    size_t json_len = strlen(json_str);
+    if (json_len >= bufferSize) {
+        free(json_str);
+        return -1;
+    }
+    
+    // Copy to buffer
+    strncpy(buffer, json_str, bufferSize - 1);
+    buffer[bufferSize - 1] = '\0';
+    free(json_str);
+    
     return 0;
 }
 
