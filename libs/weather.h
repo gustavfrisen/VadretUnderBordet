@@ -120,4 +120,16 @@ int weather_print(const weather_t* w);
  */
 int weather_print_pretty(const weather_t* w);
 
+/**
+ * @brief Free memory allocated for weather struct and set pointer to NULL
+ * 
+ * Frees all dynamically allocated string fields within the weather_t structure
+ * and then frees the structure itself. Sets the pointer to NULL to prevent
+ * accidental reuse.
+ * 
+ * @param w_ptr Pointer to weather_t pointer to dispose of
+ * @return 0 on success, -1 on error (e.g., NULL pointer)
+ */
+int weather_dispose(weather_t** w_ptr);
+
 #endif // WEATHER_H

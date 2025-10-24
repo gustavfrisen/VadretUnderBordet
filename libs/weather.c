@@ -343,3 +343,21 @@ int weather_print_pretty(const weather_t *w)
     printf("Weather Code: %d\n", w->weathercode);
     return 0;
 }
+
+int weather_dispose(weather_t **w_ptr)
+{
+    if (!w_ptr || !*w_ptr) return -1;
+    weather_t *w = *w_ptr;
+    free(w->timezone);
+    free(w->timezone_abbreviation);
+    free(w->unit_time);
+    free(w->unit_interval);
+    free(w->unit_windspeed);
+    free(w->unit_winddirection);
+    free(w->unit_is_day);
+    free(w->unit_weathercode);
+    free(w->time);
+    free(w);
+    *w_ptr = NULL;
+    return 0;
+}
