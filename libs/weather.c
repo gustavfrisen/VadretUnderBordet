@@ -194,7 +194,7 @@ int parse_openmeteo_json_to_weather(const json_t* json_obj, weather_t* weather) 
     val = json_object_get(json_obj, "elevation");
     weather->elevation = json_is_real(val) ? json_real_value(val) : 0.0;
     
-    json_t* units_obj = json_object_get(json_obj, "current_weather_units");
+    json_t* units_obj = json_object_get(json_obj, "current_units");
     if (json_is_object(units_obj)) {
         val = json_object_get(units_obj, "time");
         weather->unit_time = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
@@ -202,23 +202,53 @@ int parse_openmeteo_json_to_weather(const json_t* json_obj, weather_t* weather) 
         val = json_object_get(units_obj, "interval");
         weather->unit_interval = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
         
-        val = json_object_get(units_obj, "temperature");
-        weather->unit_temperature = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        val = json_object_get(units_obj, "temperature_2m");
+        weather->unit_temperature_2m = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
         
-        val = json_object_get(units_obj, "windspeed");
-        weather->unit_windspeed = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        val = json_object_get(units_obj, "relative_humidity_2m");
+        weather->unit_relative_humidity_2m = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
         
-        val = json_object_get(units_obj, "winddirection");
-        weather->unit_winddirection = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        val = json_object_get(units_obj, "apparent_temperature");
+        weather->unit_apparent_temperature = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
         
         val = json_object_get(units_obj, "is_day");
         weather->unit_is_day = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
         
-        val = json_object_get(units_obj, "weathercode");
-        weather->unit_weathercode = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        val = json_object_get(units_obj, "precipitation");
+        weather->unit_precipitation = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "rain");
+        weather->unit_rain = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "showers");
+        weather->unit_showers = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "snowfall");
+        weather->unit_snowfall = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "weather_code");
+        weather->unit_weather_code = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "cloud_cover");
+        weather->unit_cloud_cover = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "pressure_msl");
+        weather->unit_pressure_msl = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "surface_pressure");
+        weather->unit_surface_pressure = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "wind_speed_10m");
+        weather->unit_wind_speed_10m = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "wind_direction_10m");
+        weather->unit_wind_direction_10m = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "wind_gusts_10m");
+        weather->unit_wind_gusts_10m = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
     }
     
-    json_t* current_obj = json_object_get(json_obj, "current_weather");
+    json_t* current_obj = json_object_get(json_obj, "current");
     if (json_is_object(current_obj)) {
         val = json_object_get(current_obj, "time");
         weather->time = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
@@ -226,20 +256,64 @@ int parse_openmeteo_json_to_weather(const json_t* json_obj, weather_t* weather) 
         val = json_object_get(current_obj, "interval");
         weather->interval = json_is_integer(val) ? (int)json_integer_value(val) : 0;
         
-        val = json_object_get(current_obj, "temperature");
-        weather->temperature = json_is_real(val) ? json_real_value(val) : 0.0;
+        val = json_object_get(current_obj, "temperature_2m");
+        weather->temperature_2m = json_is_real(val) ? json_real_value(val) : 
+                                 (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
         
-        val = json_object_get(current_obj, "windspeed");
-        weather->windspeed = json_is_real(val) ? json_real_value(val) : 0.0;
+        val = json_object_get(current_obj, "relative_humidity_2m");
+        weather->relative_humidity_2m = json_is_integer(val) ? (int)json_integer_value(val) : 
+                                       (json_is_real(val) ? (int)json_real_value(val) : 0);
         
-        val = json_object_get(current_obj, "winddirection");
-        weather->winddirection = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+        val = json_object_get(current_obj, "apparent_temperature");
+        weather->apparent_temperature = json_is_real(val) ? json_real_value(val) : 
+                                       (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
         
         val = json_object_get(current_obj, "is_day");
         weather->is_day = json_is_integer(val) ? (int)json_integer_value(val) : 0;
         
-        val = json_object_get(current_obj, "weathercode");
-        weather->weathercode = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+        val = json_object_get(current_obj, "precipitation");
+        weather->precipitation = json_is_real(val) ? json_real_value(val) : 
+                               (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "rain");
+        weather->rain = json_is_real(val) ? json_real_value(val) : 
+                       (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "showers");
+        weather->showers = json_is_real(val) ? json_real_value(val) : 
+                          (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "snowfall");
+        weather->snowfall = json_is_real(val) ? json_real_value(val) : 
+                           (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "weather_code");
+        weather->weather_code = json_is_integer(val) ? (int)json_integer_value(val) : 
+                               (json_is_real(val) ? (int)json_real_value(val) : 0);
+        
+        val = json_object_get(current_obj, "cloud_cover");
+        weather->cloud_cover = json_is_integer(val) ? (int)json_integer_value(val) : 
+                              (json_is_real(val) ? (int)json_real_value(val) : 0);
+        
+        val = json_object_get(current_obj, "pressure_msl");
+        weather->pressure_msl = json_is_real(val) ? json_real_value(val) : 
+                               (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "surface_pressure");
+        weather->surface_pressure = json_is_real(val) ? json_real_value(val) : 
+                                   (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "wind_speed_10m");
+        weather->wind_speed_10m = json_is_real(val) ? json_real_value(val) : 
+                                 (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
+        
+        val = json_object_get(current_obj, "wind_direction_10m");
+        weather->wind_direction_10m = json_is_integer(val) ? (int)json_integer_value(val) : 
+                                     (json_is_real(val) ? (int)json_real_value(val) : 0);
+        
+        val = json_object_get(current_obj, "wind_gusts_10m");
+        weather->wind_gusts_10m = json_is_real(val) ? json_real_value(val) : 
+                                 (json_is_integer(val) ? (double)json_integer_value(val) : 0.0);
     }
     
     return 0;
@@ -266,12 +340,22 @@ int serialize_weather_to_json(const weather_t* weather, json_t** json_obj) {
     }
     json_object_set_new(units_obj, "time", weather->unit_time ? json_string(weather->unit_time) : json_string("iso8601"));
     json_object_set_new(units_obj, "interval", weather->unit_interval ? json_string(weather->unit_interval) : json_string("seconds"));
-    json_object_set_new(units_obj, "temperature", weather->unit_temperature ? json_string(weather->unit_temperature) : json_string("°C"));
-    json_object_set_new(units_obj, "windspeed", weather->unit_windspeed ? json_string(weather->unit_windspeed) : json_string("km/h"));
-    json_object_set_new(units_obj, "winddirection", weather->unit_winddirection ? json_string(weather->unit_winddirection) : json_string("°"));
+    json_object_set_new(units_obj, "temperature_2m", weather->unit_temperature_2m ? json_string(weather->unit_temperature_2m) : json_string("°C"));
+    json_object_set_new(units_obj, "relative_humidity_2m", weather->unit_relative_humidity_2m ? json_string(weather->unit_relative_humidity_2m) : json_string("%"));
+    json_object_set_new(units_obj, "apparent_temperature", weather->unit_apparent_temperature ? json_string(weather->unit_apparent_temperature) : json_string("°C"));
     json_object_set_new(units_obj, "is_day", weather->unit_is_day ? json_string(weather->unit_is_day) : json_string(""));
-    json_object_set_new(units_obj, "weathercode", weather->unit_weathercode ? json_string(weather->unit_weathercode) : json_string("wmo code"));
-    json_object_set_new(*json_obj, "current_weather_units", units_obj);
+    json_object_set_new(units_obj, "precipitation", weather->unit_precipitation ? json_string(weather->unit_precipitation) : json_string("mm"));
+    json_object_set_new(units_obj, "rain", weather->unit_rain ? json_string(weather->unit_rain) : json_string("mm"));
+    json_object_set_new(units_obj, "showers", weather->unit_showers ? json_string(weather->unit_showers) : json_string("mm"));
+    json_object_set_new(units_obj, "snowfall", weather->unit_snowfall ? json_string(weather->unit_snowfall) : json_string("cm"));
+    json_object_set_new(units_obj, "weather_code", weather->unit_weather_code ? json_string(weather->unit_weather_code) : json_string("wmo code"));
+    json_object_set_new(units_obj, "cloud_cover", weather->unit_cloud_cover ? json_string(weather->unit_cloud_cover) : json_string("%"));
+    json_object_set_new(units_obj, "pressure_msl", weather->unit_pressure_msl ? json_string(weather->unit_pressure_msl) : json_string("hPa"));
+    json_object_set_new(units_obj, "surface_pressure", weather->unit_surface_pressure ? json_string(weather->unit_surface_pressure) : json_string("hPa"));
+    json_object_set_new(units_obj, "wind_speed_10m", weather->unit_wind_speed_10m ? json_string(weather->unit_wind_speed_10m) : json_string("km/h"));
+    json_object_set_new(units_obj, "wind_direction_10m", weather->unit_wind_direction_10m ? json_string(weather->unit_wind_direction_10m) : json_string("°"));
+    json_object_set_new(units_obj, "wind_gusts_10m", weather->unit_wind_gusts_10m ? json_string(weather->unit_wind_gusts_10m) : json_string("km/h"));
+    json_object_set_new(*json_obj, "current_units", units_obj);
     
     json_t* current_obj = json_object();
     if (!current_obj) {
@@ -280,12 +364,22 @@ int serialize_weather_to_json(const weather_t* weather, json_t** json_obj) {
     }
     json_object_set_new(current_obj, "time", weather->time ? json_string(weather->time) : json_null());
     json_object_set_new(current_obj, "interval", json_integer(weather->interval));
-    json_object_set_new(current_obj, "temperature", json_real(weather->temperature));
-    json_object_set_new(current_obj, "windspeed", json_real(weather->windspeed));
-    json_object_set_new(current_obj, "winddirection", json_integer(weather->winddirection));
+    json_object_set_new(current_obj, "temperature_2m", json_real(weather->temperature_2m));
+    json_object_set_new(current_obj, "relative_humidity_2m", json_integer(weather->relative_humidity_2m));
+    json_object_set_new(current_obj, "apparent_temperature", json_real(weather->apparent_temperature));
     json_object_set_new(current_obj, "is_day", json_integer(weather->is_day));
-    json_object_set_new(current_obj, "weathercode", json_integer(weather->weathercode));
-    json_object_set_new(*json_obj, "current_weather", current_obj);
+    json_object_set_new(current_obj, "precipitation", json_real(weather->precipitation));
+    json_object_set_new(current_obj, "rain", json_real(weather->rain));
+    json_object_set_new(current_obj, "showers", json_real(weather->showers));
+    json_object_set_new(current_obj, "snowfall", json_real(weather->snowfall));
+    json_object_set_new(current_obj, "weather_code", json_integer(weather->weather_code));
+    json_object_set_new(current_obj, "cloud_cover", json_integer(weather->cloud_cover));
+    json_object_set_new(current_obj, "pressure_msl", json_real(weather->pressure_msl));
+    json_object_set_new(current_obj, "surface_pressure", json_real(weather->surface_pressure));
+    json_object_set_new(current_obj, "wind_speed_10m", json_real(weather->wind_speed_10m));
+    json_object_set_new(current_obj, "wind_direction_10m", json_integer(weather->wind_direction_10m));
+    json_object_set_new(current_obj, "wind_gusts_10m", json_real(weather->wind_gusts_10m));
+    json_object_set_new(*json_obj, "current", current_obj);
     
     return 0;
 }
@@ -299,11 +393,21 @@ void free_weather(weather_t* weather) {
     free(weather->timezone_abbreviation);
     free(weather->unit_time);
     free(weather->unit_interval);
-    free(weather->unit_temperature);
-    free(weather->unit_windspeed);
-    free(weather->unit_winddirection);
+    free(weather->unit_temperature_2m);
+    free(weather->unit_relative_humidity_2m);
+    free(weather->unit_apparent_temperature);
     free(weather->unit_is_day);
-    free(weather->unit_weathercode);
+    free(weather->unit_precipitation);
+    free(weather->unit_rain);
+    free(weather->unit_showers);
+    free(weather->unit_snowfall);
+    free(weather->unit_weather_code);
+    free(weather->unit_cloud_cover);
+    free(weather->unit_pressure_msl);
+    free(weather->unit_surface_pressure);
+    free(weather->unit_wind_speed_10m);
+    free(weather->unit_wind_direction_10m);
+    free(weather->unit_wind_gusts_10m);
     free(weather->time);
     
     memset(weather, 0, sizeof(weather_t));

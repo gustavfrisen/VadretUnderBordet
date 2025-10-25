@@ -14,21 +14,43 @@ typedef struct {
     char* timezone_abbreviation;
     double elevation;
 
+    // Units for current_units
     char* unit_time;
     char* unit_interval;
-    char* unit_temperature;
-    char* unit_windspeed;
-    char* unit_winddirection;
+    char* unit_temperature_2m;
+    char* unit_relative_humidity_2m;
+    char* unit_apparent_temperature;
     char* unit_is_day;
-    char* unit_weathercode;
+    char* unit_precipitation;
+    char* unit_rain;
+    char* unit_showers;
+    char* unit_snowfall;
+    char* unit_weather_code;
+    char* unit_cloud_cover;
+    char* unit_pressure_msl;
+    char* unit_surface_pressure;
+    char* unit_wind_speed_10m;
+    char* unit_wind_direction_10m;
+    char* unit_wind_gusts_10m;
 
+    // Current weather data
     char* time;
     int interval;
-    double temperature;
-    double windspeed;
-    int winddirection;
+    double temperature_2m;
+    int relative_humidity_2m;
+    double apparent_temperature;
     int is_day;
-    int weathercode;
+    double precipitation;
+    double rain;
+    double showers;
+    double snowfall;
+    int weather_code;
+    int cloud_cover;
+    double pressure_msl;
+    double surface_pressure;
+    double wind_speed_10m;
+    int wind_direction_10m;
+    double wind_gusts_10m;
 } weather_t;
 
 // ========== Cache Management Functions ==========
