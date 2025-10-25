@@ -10,6 +10,8 @@
 int parse_openmeteo_json_to_weather(const json_t* json_obj, weather_t* weather);
 int serialize_weather_to_json(const weather_t* weather, json_t** json_obj);
 
+// ========== Helper Functions ==========
+
 static void get_cache_file_path(const char* city_name, char* path, size_t path_size) {
     snprintf(path, path_size, "weather_cache/%s.json", city_name);
 }

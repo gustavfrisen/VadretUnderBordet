@@ -31,11 +31,13 @@ typedef struct {
     int weathercode;
 } weather_t;
 
+// ========== Cache Management Functions ==========
 int does_weather_cache_exist(const char* city_name);
 int is_weather_cache_stale(const char* city_name, int max_age_seconds);
 int load_weather_from_cache(const char* city_name, char** jsonStr);
 int save_weather_to_cache(const char* city_name, const char* jsonStr);
 
+// ========== Serialization Functions ==========
 int process_openmeteo_response(const char* api_response, char** client_response); // Used by server to process API response
 int deserialize_weather_response(const char* client_response, weather_t* weather); // Used by client to parse response
 
