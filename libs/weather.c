@@ -33,6 +33,8 @@ static char* create_lowercase_copy(const char* str) {
 // ========== Basic Interface Functions ==========
 
 int does_weather_cache_exist(const char* city_name) {
+    create_folder("weather_cache");
+    
     if (!city_name) return 0;
 
     char* lower_city = create_lowercase_copy(city_name);
