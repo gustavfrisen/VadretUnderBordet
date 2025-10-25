@@ -1,363 +1,306 @@
 #include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include "weather.h"
 #include "utils.h"
 
-int weather_from_json(json_t *json, weather_t *w);
+int parse_openmeteo_json_to_weather(const json_t* json_obj, weather_t* weather);
+int serialize_weather_to_json(const weather_t* weather, json_t** json_obj);
 
-int weather_get(const char *city_name, weather_t *w)
-{
-    create_folder("weather_cache");
+static void get_cache_file_path(const char* city_name, char* path, size_t path_size) {
+    snprintf(path, path_size, "weather_cache/%s.json", city_name);
+}
+
+static char* create_lowercase_copy(const char* str) {
+    if (!str) return NULL;
     
-    if (!city_name || !w) return -1;
+    size_t len = strlen(str);
+    char* lower_str = malloc(len + 1);
+    if (!lower_str) return NULL;
     
-    char filename[256];
-    snprintf(filename, sizeof(filename), "weather_cache/%s.json", city_name);
+    for (size_t i = 0; i <= len; i++) {
+        lower_str[i] = tolower((unsigned char)str[i]);
+    }
+    
+    return lower_str;
+}
+
+// ========== Basic Interface Functions ==========
+
+int does_weather_cache_exist(const char* city_name) {
+    if (!city_name) return 0;
+
+    char* lower_city = create_lowercase_copy(city_name);
+    if (!lower_city) return -1;
+
+    char cache_path[512];
+    get_cache_file_path(lower_city, cache_path, sizeof(cache_path));
+
+    free(lower_city);
     
     json_error_t error;
-    json_t *city_json = json_load_file(filename, 0, &error);
+    json_t* json_obj = json_load_file(cache_path, 0, &error);
     
-    if (!city_json) {
-        fprintf(stderr, "Error loading JSON from file %s: %s\n", filename, error.text);
-        return -1;
-    }
-    else
-    {
-        weather_from_json(city_json, w);
-        if (weather_is_stale(w, w->interval) == 0) {
-            return 0;
-        }
-        else {
-            return -1;
-        }
-
-        json_decref(city_json);
+    if (json_obj) {
+        json_decref(json_obj);
+        return 1;
     }
     
     return 0;
 }
 
-int weather_from_json(json_t* json, weather_t* w)
-{
-    if (!json || !w) return -1;
+int is_weather_cache_stale(const char* city_name, int max_age_seconds) {
+    if (!city_name || max_age_seconds < 0) return 1;
 
-    // Parse top-level fields
-    json_t* lat_json = json_object_get(json, "latitude");
-    if (json_is_number(lat_json)) {
-        w->latitude = json_number_value(lat_json);
-    }
-
-    json_t* lon_json = json_object_get(json, "longitude");
-    if (json_is_number(lon_json)) {
-        w->longitude = json_number_value(lon_json);
-    }
-
-    json_t* gen_json = json_object_get(json, "generationtime_ms");
-    if (json_is_number(gen_json)) {
-        w->generationtime_ms = json_number_value(gen_json);
-    }
-
-    json_t* utc_json = json_object_get(json, "utc_offset_seconds");
-    if (json_is_integer(utc_json)) {
-        w->utc_offset_seconds = json_integer_value(utc_json);
-    }
-
-    json_t* tz_json = json_object_get(json, "timezone");
-    if (json_is_string(tz_json)) {
-        const char* tz = json_string_value(tz_json);
-        w->timezone = strdup(tz);
-    }
-
-    json_t* tz_abbr_json = json_object_get(json, "timezone_abbreviation");
-    if (json_is_string(tz_abbr_json)) {
-        const char* tz_abbr = json_string_value(tz_abbr_json);
-        w->timezone_abbreviation = strdup(tz_abbr);
-    }
-
-    json_t* elev_json = json_object_get(json, "elevation");
-    if (json_is_number(elev_json)) {
-        w->elevation = json_number_value(elev_json);
-    }
-
-    // Parse current_weather_units object
-    json_t* units = json_object_get(json, "current_weather_units");
-    if (json_is_object(units)) {
-        json_t* unit_time = json_object_get(units, "time");
-        if (json_is_string(unit_time)) {
-            w->unit_time = strdup(json_string_value(unit_time));
-        }
-
-        json_t* unit_interval = json_object_get(units, "interval");
-        if (json_is_string(unit_interval)) {
-            w->unit_interval = strdup(json_string_value(unit_interval));
-        }
-
-        json_t* unit_windspeed = json_object_get(units, "windspeed");
-        if (json_is_string(unit_windspeed)) {
-            w->unit_windspeed = strdup(json_string_value(unit_windspeed));
-        }
-
-        json_t* unit_winddirection = json_object_get(units, "winddirection");
-        if (json_is_string(unit_winddirection)) {
-            w->unit_winddirection = strdup(json_string_value(unit_winddirection));
-        }
-
-        json_t* unit_is_day = json_object_get(units, "is_day");
-        if (json_is_string(unit_is_day)) {
-            w->unit_is_day = strdup(json_string_value(unit_is_day));
-        }
-
-        json_t* unit_weathercode = json_object_get(units, "weathercode");
-        if (json_is_string(unit_weathercode)) {
-            w->unit_weathercode = strdup(json_string_value(unit_weathercode));
-        }
-    }
-
-    // Parse current_weather object
-    json_t* current = json_object_get(json, "current_weather");
-    if (json_is_object(current)) {
-        json_t* time_json = json_object_get(current, "time");
-        if (json_is_string(time_json)) {
-            w->time = strdup(json_string_value(time_json));
-        }
-
-        json_t* interval_json = json_object_get(current, "interval");
-        if (json_is_integer(interval_json)) {
-            w->interval = json_integer_value(interval_json);
-        }
-
-        json_t* temp_json = json_object_get(current, "temperature");
-        if (json_is_number(temp_json)) {
-            w->temperature = json_number_value(temp_json);
-        }
-
-        json_t* windspeed_json = json_object_get(current, "windspeed");
-        if (json_is_number(windspeed_json)) {
-            w->windspeed = json_number_value(windspeed_json);
-        }
-
-        json_t* winddir_json = json_object_get(current, "winddirection");
-        if (json_is_integer(winddir_json)) {
-            w->winddirection = json_integer_value(winddir_json);
-        }
-
-        json_t* is_day_json = json_object_get(current, "is_day");
-        if (json_is_integer(is_day_json)) {
-            w->is_day = json_integer_value(is_day_json);
-        }
-
-        json_t* weathercode_json = json_object_get(current, "weathercode");
-        if (json_is_integer(weathercode_json)) {
-            w->weathercode = json_integer_value(weathercode_json);
-        }
-    }
-
-    return 0;
-}
-
-int weather_to_json(const char* cityName, const weather_t* w)
-{
-    if (!cityName || !w) return -1;
-
-    create_folder("weather_cache");
-
-    // Build the JSON structure
-    json_t* root = json_object();
+    char* lower_city = create_lowercase_copy(city_name);
+    if (!lower_city) return -1;
     
-    // Top-level fields
-    json_object_set_new(root, "latitude", json_real(w->latitude));
-    json_object_set_new(root, "longitude", json_real(w->longitude));
-    json_object_set_new(root, "generationtime_ms", json_real(w->generationtime_ms));
-    json_object_set_new(root, "utc_offset_seconds", json_integer(w->utc_offset_seconds));
-    json_object_set_new(root, "timezone", json_string(w->timezone ? w->timezone : ""));
-    json_object_set_new(root, "timezone_abbreviation", json_string(w->timezone_abbreviation ? w->timezone_abbreviation : ""));
-    json_object_set_new(root, "elevation", json_real(w->elevation));
+    char cache_path[512];
+    get_cache_file_path(lower_city, cache_path, sizeof(cache_path));
 
-    // current_weather_units object
-    json_t* units = json_object();
-    json_object_set_new(units, "time", json_string(w->unit_time ? w->unit_time : ""));
-    json_object_set_new(units, "interval", json_string(w->unit_interval ? w->unit_interval : ""));
-    json_object_set_new(units, "temperature", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
-    json_object_set_new(units, "windspeed", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
-    json_object_set_new(units, "winddirection", json_string(w->unit_winddirection ? w->unit_winddirection : ""));
-    json_object_set_new(units, "is_day", json_string(w->unit_is_day ? w->unit_is_day : ""));
-    json_object_set_new(units, "weathercode", json_string(w->unit_weathercode ? w->unit_weathercode : ""));
-    json_object_set_new(root, "current_weather_units", units);
-
-    // current_weather object
-    json_t* current = json_object();
-    json_object_set_new(current, "time", json_string(w->time ? w->time : ""));
-    json_object_set_new(current, "interval", json_integer(w->interval));
-    json_object_set_new(current, "temperature", json_real(w->temperature));
-    json_object_set_new(current, "windspeed", json_real(w->windspeed));
-    json_object_set_new(current, "winddirection", json_integer(w->winddirection));
-    json_object_set_new(current, "is_day", json_integer(w->is_day));
-    json_object_set_new(current, "weathercode", json_integer(w->weathercode));
-    json_object_set_new(root, "current_weather", current);
-
-    // Save to file
-    char filepath[256];
-    snprintf(filepath, sizeof(filepath), "weather_cache/%s.json", cityName);
+    free(lower_city);
     
-    if (json_dump_file(root, filepath, JSON_INDENT(4)) != 0) {
-        json_decref(root);
-        return -1;
-    }
-
-    json_decref(root);
-    return 0;
-}
-
-int string_to_weather(weather_t *w, const char *buffer, size_t bufferSize)
-{
-    if (!w || !buffer || bufferSize == 0) return -1;
-
-    json_error_t error;
-    json_t* json = json_loads(buffer, 0, &error);
-    
-    if (!json) {
-        fprintf(stderr, "Error parsing JSON string: %s\n", error.text);
-        return -1;
-    }
-
-    int result = weather_from_json(json, w);
-    json_decref(json);
-    
-    return result;
-}
-
-int weather_to_string(const weather_t *w, char *buffer, size_t bufferSize)
-{
-    if (!w || !buffer || bufferSize == 0) return -1;
-
-    // Build the JSON structure
-    json_t* root = json_object();
-    
-    // Top-level fields
-    json_object_set_new(root, "latitude", json_real(w->latitude));
-    json_object_set_new(root, "longitude", json_real(w->longitude));
-    json_object_set_new(root, "generationtime_ms", json_real(w->generationtime_ms));
-    json_object_set_new(root, "utc_offset_seconds", json_integer(w->utc_offset_seconds));
-    json_object_set_new(root, "timezone", json_string(w->timezone ? w->timezone : ""));
-    json_object_set_new(root, "timezone_abbreviation", json_string(w->timezone_abbreviation ? w->timezone_abbreviation : ""));
-    json_object_set_new(root, "elevation", json_real(w->elevation));
-
-    // current_weather_units object
-    json_t* units = json_object();
-    json_object_set_new(units, "time", json_string(w->unit_time ? w->unit_time : ""));
-    json_object_set_new(units, "interval", json_string(w->unit_interval ? w->unit_interval : ""));
-    json_object_set_new(units, "temperature", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
-    json_object_set_new(units, "windspeed", json_string(w->unit_windspeed ? w->unit_windspeed : ""));
-    json_object_set_new(units, "winddirection", json_string(w->unit_winddirection ? w->unit_winddirection : ""));
-    json_object_set_new(units, "is_day", json_string(w->unit_is_day ? w->unit_is_day : ""));
-    json_object_set_new(units, "weathercode", json_string(w->unit_weathercode ? w->unit_weathercode : ""));
-    json_object_set_new(root, "current_weather_units", units);
-
-    // current_weather object
-    json_t* current = json_object();
-    json_object_set_new(current, "time", json_string(w->time ? w->time : ""));
-    json_object_set_new(current, "interval", json_integer(w->interval));
-    json_object_set_new(current, "temperature", json_real(w->temperature));
-    json_object_set_new(current, "windspeed", json_real(w->windspeed));
-    json_object_set_new(current, "winddirection", json_integer(w->winddirection));
-    json_object_set_new(current, "is_day", json_integer(w->is_day));
-    json_object_set_new(current, "weathercode", json_integer(w->weathercode));
-    json_object_set_new(root, "current_weather", current);
-
-    // Convert to string
-    char* json_str = json_dumps(root, JSON_INDENT(4));
-    json_decref(root);
-    
-    if (!json_str) return -1;
-    
-    // Check if buffer is large enough
-    size_t json_len = strlen(json_str);
-    if (json_len >= bufferSize) {
-        free(json_str);
-        return -1;
+    struct stat file_stat;
+    if (stat(cache_path, &file_stat) != 0) {
+        return 1;
     }
     
-    // Copy to buffer
-    strncpy(buffer, json_str, bufferSize - 1);
-    buffer[bufferSize - 1] = '\0';
-    free(json_str);
-    
-    return 0;
-}
-
-int weather_is_stale(const weather_t* w, int max_age_seconds)
-{
-    if (!w || !w->time) return -1;
-
-    // Parse ISO8601 timestamp: "2025-10-07T18:15"
-    struct tm weather_time = {0};
-    if (sscanf(w->time, "%d-%d-%dT%d:%d",
-               &weather_time.tm_year,
-               &weather_time.tm_mon,
-               &weather_time.tm_mday,
-               &weather_time.tm_hour,
-               &weather_time.tm_min) != 5) {
-        return -1; // Parse error
-    }
-    
-    // Adjust tm_year (years since 1900) and tm_mon (0-11)
-    weather_time.tm_year -= 1900;
-    weather_time.tm_mon -= 1;
-    weather_time.tm_isdst = -1;
-    
-    // Convert to time_t
-    time_t weather_timestamp = mktime(&weather_time);
-    if (weather_timestamp == -1) {
-        return -1; // Conversion error
-    }
-    
-    // Get current time
     time_t current_time = time(NULL);
+    time_t file_age = current_time - file_stat.st_mtime;
     
-    // Calculate age in seconds
-    double age_seconds = difftime(current_time, weather_timestamp);
+    return file_age > max_age_seconds ? 1 : 0;
+}
+
+int load_weather_from_cache(const char* city_name, char** jsonStr) {
+    if (!city_name || !jsonStr) return -1;
+
+    char* lower_city = create_lowercase_copy(city_name);
+    if (!lower_city) return -1;
     
-    // Return 1 if stale (age > max_age), 0 if fresh
-    return (age_seconds > max_age_seconds) ? 1 : 0;
+    char cache_path[512];
+    get_cache_file_path(lower_city, cache_path, sizeof(cache_path));
+
+    free(lower_city);
+    
+    json_error_t error;
+    json_t* json_obj = json_load_file(cache_path, 0, &error);
+    if (!json_obj) {
+        return -1;
+    }
+    
+    *jsonStr = json_dumps(json_obj, JSON_COMPACT);
+    json_decref(json_obj);
+    
+    return *jsonStr ? 0 : -1;
 }
 
-int weather_print(const weather_t *w)
+int save_weather_to_cache(const char* city_name, const char* jsonStr) {
+    if (!city_name || !jsonStr) return -1;
+
+    char* lower_city = create_lowercase_copy(city_name);
+    if (!lower_city) return -1;
+    
+    char cache_path[512];
+    get_cache_file_path(lower_city, cache_path, sizeof(cache_path));
+
+    free(lower_city);
+    
+    json_error_t error;
+    json_t* json_obj = json_loads(jsonStr, 0, &error);
+    if (!json_obj) {
+        return -1;
+    }
+    
+    int result = json_dump_file(json_obj, cache_path, JSON_INDENT(2));
+    json_decref(json_obj);
+    
+    return result == 0 ? 0 : -1;
+}
+
+int process_openmeteo_response(const char *api_response, char **client_response)
 {
-    if (!w) return -1;
-    printf("Weather for (%.4f, %.4f):\n", w->latitude, w->longitude);
-    printf("Temperature: %.2f °C\n", w->temperature);
-    printf("Windspeed: %.2f m/s\n", w->windspeed);
-    printf("Wind Direction: %d°\n", w->winddirection);
-    printf("Weather Code: %d\n", w->weathercode);
+    weather_t weather;
+
+    // Parse API response into weather structure
+    json_error_t error;
+    json_t* root_api = json_loads(api_response, 0, &error);
+    if (!root_api) return -1;
+
+    int result = parse_openmeteo_json_to_weather(root_api, &weather);
+    json_decref(root_api);
+    if (result != 0) return -1;
+
+    // Serialize weather structure into client response JSON string
+    json_t* root_client;
+    if (serialize_weather_to_json(&weather, &root_client) != 0) {
+        free_weather(&weather);
+        return -1;
+    }
+    *client_response = json_dumps(root_client, JSON_COMPACT);
+    json_decref(root_client);
+
+    free_weather(&weather);
     return 0;
 }
 
-int weather_print_pretty(const weather_t *w)
+int deserialize_weather_response(const char *client_response, weather_t *weather)
 {
-    if (!w) return -1;
-    printf("Weather Information:\n");
-    printf("Location: (%.4f, %.4f)\n", w->latitude, w->longitude);
-    printf("Temperature: %.2f °C\n", w->temperature);
-    printf("Windspeed: %.2f m/s\n", w->windspeed);
-    printf("Wind Direction: %d°\n", w->winddirection);
-    printf("Weather Code: %d\n", w->weathercode);
+    // Parse client response JSON string into weather structure
+    json_error_t error;
+    json_t* root = json_loads(client_response, 0, &error);
+    if (!root) return -1;
+
+    int result = parse_openmeteo_json_to_weather(root, weather);
+    json_decref(root);
+    if (result != 0) return -1;
+   
     return 0;
 }
 
-int weather_dispose(weather_t **w_ptr)
-{
-    if (!w_ptr || !*w_ptr) return -1;
-    weather_t *w = *w_ptr;
-    free(w->timezone);
-    free(w->timezone_abbreviation);
-    free(w->unit_time);
-    free(w->unit_interval);
-    free(w->unit_windspeed);
-    free(w->unit_winddirection);
-    free(w->unit_is_day);
-    free(w->unit_weathercode);
-    free(w->time);
-    free(w);
-    *w_ptr = NULL;
+// ========== OpenMeteo Conversion Helpers ==========
+
+int parse_openmeteo_json_to_weather(const json_t* json_obj, weather_t* weather) {
+    if (!json_obj || !weather) return -1;
+    
+    memset(weather, 0, sizeof(weather_t));
+    
+    json_t* val;
+    
+    val = json_object_get(json_obj, "latitude");
+    weather->latitude = json_is_real(val) ? json_real_value(val) : 0.0;
+    
+    val = json_object_get(json_obj, "longitude");
+    weather->longitude = json_is_real(val) ? json_real_value(val) : 0.0;
+    
+    val = json_object_get(json_obj, "generationtime_ms");
+    weather->generationtime_ms = json_is_real(val) ? json_real_value(val) : 0.0;
+    
+    val = json_object_get(json_obj, "utc_offset_seconds");
+    weather->utc_offset_seconds = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+    
+    val = json_object_get(json_obj, "timezone");
+    weather->timezone = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+    
+    val = json_object_get(json_obj, "timezone_abbreviation");
+    weather->timezone_abbreviation = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+    
+    val = json_object_get(json_obj, "elevation");
+    weather->elevation = json_is_real(val) ? json_real_value(val) : 0.0;
+    
+    json_t* units_obj = json_object_get(json_obj, "current_weather_units");
+    if (json_is_object(units_obj)) {
+        val = json_object_get(units_obj, "time");
+        weather->unit_time = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "interval");
+        weather->unit_interval = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "temperature");
+        weather->unit_temperature = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "windspeed");
+        weather->unit_windspeed = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "winddirection");
+        weather->unit_winddirection = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "is_day");
+        weather->unit_is_day = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(units_obj, "weathercode");
+        weather->unit_weathercode = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+    }
+    
+    json_t* current_obj = json_object_get(json_obj, "current_weather");
+    if (json_is_object(current_obj)) {
+        val = json_object_get(current_obj, "time");
+        weather->time = (json_is_string(val) && json_string_value(val)) ? strdup(json_string_value(val)) : NULL;
+        
+        val = json_object_get(current_obj, "interval");
+        weather->interval = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+        
+        val = json_object_get(current_obj, "temperature");
+        weather->temperature = json_is_real(val) ? json_real_value(val) : 0.0;
+        
+        val = json_object_get(current_obj, "windspeed");
+        weather->windspeed = json_is_real(val) ? json_real_value(val) : 0.0;
+        
+        val = json_object_get(current_obj, "winddirection");
+        weather->winddirection = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+        
+        val = json_object_get(current_obj, "is_day");
+        weather->is_day = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+        
+        val = json_object_get(current_obj, "weathercode");
+        weather->weathercode = json_is_integer(val) ? (int)json_integer_value(val) : 0;
+    }
+    
     return 0;
+}
+
+int serialize_weather_to_json(const weather_t* weather, json_t** json_obj) {
+    if (!weather || !json_obj) return -1;
+    
+    *json_obj = json_object();
+    if (!*json_obj) return -1;
+    
+    json_object_set_new(*json_obj, "latitude", json_real(weather->latitude));
+    json_object_set_new(*json_obj, "longitude", json_real(weather->longitude));
+    json_object_set_new(*json_obj, "generationtime_ms", json_real(weather->generationtime_ms));
+    json_object_set_new(*json_obj, "utc_offset_seconds", json_integer(weather->utc_offset_seconds));
+    json_object_set_new(*json_obj, "timezone", weather->timezone ? json_string(weather->timezone) : json_string("GMT"));
+    json_object_set_new(*json_obj, "timezone_abbreviation", weather->timezone_abbreviation ? json_string(weather->timezone_abbreviation) : json_string("GMT"));
+    json_object_set_new(*json_obj, "elevation", json_real(weather->elevation));
+    
+    json_t* units_obj = json_object();
+    if (!units_obj) {
+        json_decref(*json_obj);
+        return -1;
+    }
+    json_object_set_new(units_obj, "time", weather->unit_time ? json_string(weather->unit_time) : json_string("iso8601"));
+    json_object_set_new(units_obj, "interval", weather->unit_interval ? json_string(weather->unit_interval) : json_string("seconds"));
+    json_object_set_new(units_obj, "temperature", weather->unit_temperature ? json_string(weather->unit_temperature) : json_string("°C"));
+    json_object_set_new(units_obj, "windspeed", weather->unit_windspeed ? json_string(weather->unit_windspeed) : json_string("km/h"));
+    json_object_set_new(units_obj, "winddirection", weather->unit_winddirection ? json_string(weather->unit_winddirection) : json_string("°"));
+    json_object_set_new(units_obj, "is_day", weather->unit_is_day ? json_string(weather->unit_is_day) : json_string(""));
+    json_object_set_new(units_obj, "weathercode", weather->unit_weathercode ? json_string(weather->unit_weathercode) : json_string("wmo code"));
+    json_object_set_new(*json_obj, "current_weather_units", units_obj);
+    
+    json_t* current_obj = json_object();
+    if (!current_obj) {
+        json_decref(*json_obj);
+        return -1;
+    }
+    json_object_set_new(current_obj, "time", weather->time ? json_string(weather->time) : json_null());
+    json_object_set_new(current_obj, "interval", json_integer(weather->interval));
+    json_object_set_new(current_obj, "temperature", json_real(weather->temperature));
+    json_object_set_new(current_obj, "windspeed", json_real(weather->windspeed));
+    json_object_set_new(current_obj, "winddirection", json_integer(weather->winddirection));
+    json_object_set_new(current_obj, "is_day", json_integer(weather->is_day));
+    json_object_set_new(current_obj, "weathercode", json_integer(weather->weathercode));
+    json_object_set_new(*json_obj, "current_weather", current_obj);
+    
+    return 0;
+}
+
+// ========== Memory Management ==========
+
+void free_weather(weather_t* weather) {
+    if (!weather) return;
+    
+    free(weather->timezone);
+    free(weather->timezone_abbreviation);
+    free(weather->unit_time);
+    free(weather->unit_interval);
+    free(weather->unit_temperature);
+    free(weather->unit_windspeed);
+    free(weather->unit_winddirection);
+    free(weather->unit_is_day);
+    free(weather->unit_weathercode);
+    free(weather->time);
+    
+    memset(weather, 0, sizeof(weather_t));
 }
