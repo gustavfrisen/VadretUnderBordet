@@ -16,53 +16,6 @@ static void get_cache_file_path(const char* city_name, char* path, size_t path_s
     snprintf(path, path_size, "weather_cache/%s.json", city_name);
 }
 
-static char* create_lowercase_copy(const char* str) {
-    if (!str) return NULL;
-
-    size_t len = strlen(str);
-    char* lower_str = malloc(len + 1);
-    if (!lower_str) return NULL;
-    
-    for (size_t i = 0; i < len; i++) {
-        unsigned char c = (unsigned char)str[i];
-        
-        // Handle UTF-8 encoded Swedish characters
-        if (c == 0xC3 && i + 1 < len) {
-            unsigned char next = (unsigned char)str[i + 1];
-            
-            switch (next) {
-                case 0x84:  // Ä (UTF-8: C3 84)
-                    lower_str[i] = 0xC3;
-                    lower_str[i + 1] = 0xA4;  // ä (UTF-8: C3 A4)
-                    i++; // Skip next byte as we've processed it
-                    break;
-                case 0x85:  // Å (UTF-8: C3 85)
-                    lower_str[i] = 0xC3;
-                    lower_str[i + 1] = 0xA5;  // å (UTF-8: C3 A5)
-                    i++; // Skip next byte as we've processed it
-                    break;
-                case 0x96:  // Ö (UTF-8: C3 96)
-                    lower_str[i] = 0xC3;
-                    lower_str[i + 1] = 0xB6;  // ö (UTF-8: C3 B6)
-                    i++; // Skip next byte as we've processed it
-                    break;
-                default:
-                    // Copy the C3 and let next iteration handle the following byte
-                    lower_str[i] = c;
-                    break;
-            }
-        } else {
-            // Regular ASCII character
-            lower_str[i] = tolower(c);
-        }
-    }
-    
-    // Null terminate
-    lower_str[len] = '\0';
-    
-    return lower_str;
-}
-
 // ========== Basic Interface Functions ==========
 
 int does_weather_cache_exist(const char* city_name) {
@@ -194,6 +147,42 @@ int deserialize_weather_response(const char *client_response, weather_t *weather
     json_decref(root);
     if (result != 0) return -1;
    
+    return 0;
+}
+
+// ========== Printing ==========
+
+int weather_print(const weather_t *weather)
+{
+    if (!weather) return -1;
+
+    printf("Weather Data:\n");
+    printf("  Location: (%.6f, %.6f)\n", weather->latitude, weather->longitude);
+    printf("  Timezone: %s\n", weather->timezone ? weather->timezone : "N/A");
+    printf("  Elevation: %.2f m\n", weather->elevation);
+    printf("  Current Temperature: %.2f %s\n", weather->temperature_2m, weather->unit_temperature_2m ? weather->unit_temperature_2m : "N/A");
+    printf("  Relative Humidity: %d %s\n", weather->relative_humidity_2m, weather->unit_relative_humidity_2m ? weather->unit_relative_humidity_2m : "N/A");
+    printf("  Apparent Temperature: %.2f %s\n", weather->apparent_temperature, weather->unit_apparent_temperature ? weather->unit_apparent_temperature : "N/A");
+    printf("  Is Day: %d %s\n", weather->is_day, weather->unit_is_day ? weather->unit_is_day : "N/A");
+    printf("  Precipitation: %.2f %s\n", weather->precipitation, weather->unit_precipitation ? weather->unit_precipitation : "N/A");
+    printf("  Wind Speed: %.2f %s\n", weather->wind_speed_10m, weather->unit_wind_speed_10m ? weather->unit_wind_speed_10m : "N/A");
+    return 0;
+}
+
+int weather_print_pretty(const weather_t *weather)
+{
+    if (!weather) return -1;
+    printf("----- Weather Report -----\n");
+    printf("Location: (%.6f, %.6f)\n", weather->latitude, weather->longitude);
+    printf("Timezone: %s\n", weather->timezone ? weather->timezone : "N/A");
+    printf("Elevation: %.2f m\n", weather->elevation);
+    printf("Current Temperature: %.2f %s\n", weather->temperature_2m, weather->unit_temperature_2m ? weather->unit_temperature_2m : "N/A");
+    printf("Relative Humidity: %d %s\n", weather->relative_humidity_2m, weather->unit_relative_humidity_2m ? weather->unit_relative_humidity_2m : "N/A");
+    printf("Apparent Temperature: %.2f %s\n", weather->apparent_temperature,weather->unit_apparent_temperature ? weather->unit_apparent_temperature : "N/A");
+    printf("Is Day: %d %s\n", weather->is_day,weather->unit_is_day ? weather->unit_is_day : "N/A");
+    printf("Precipitation: %.2f %s\n", weather->precipitation,weather->unit_precipitation ? weather->unit_precipitation : "N/A");
+    printf("Wind Speed: %.2f %s\n", weather->wind_speed_10m,weather->unit_wind_speed_10m ? weather->unit_wind_speed_10m : "N/A");
+    printf("--------------------------\n");
     return 0;
 }
 

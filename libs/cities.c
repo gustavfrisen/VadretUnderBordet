@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <tinydir.h>
 #include <jansson.h>
 
@@ -210,10 +211,12 @@ int cities_get_city_by_name(cities_t *cities, const char *name, city_t **city_pt
 {
     if (!cities || !name) return -1;
 
+    const char* name_lower = create_lowercase_copy(name);
+
     Node *node = cities->list.head;
     while (node) {
         city_t *city = (city_t *)node->item;
-        if (city && city->name && strcmp(city->name, name) == 0) {
+        if (city && city->name && strcmp(city->name, name_lower) == 0) {
             if (city_ptr) *city_ptr = city;
             return 0;
         }
@@ -304,8 +307,8 @@ int cities_print(cities_t *cities)
     while (node) {
         city_t *city = (city_t *)node->item;
         if (city && city->name) {
-            //printf("%s\n", city->name);
-            printf("%s: Latitude: %.4f, Longitude: %.4f\n", city->name, city->latitude, city->longitude);
+            city->name[0] = toupper((unsigned char)city->name[0]);
+            printf("%s\n", city->name);
         }
         node = node->front;
     }
@@ -321,9 +324,10 @@ int cities_print_pretty(cities_t *cities)
     while (node) {
         city_t *city = (city_t *)node->item;
         if (city && city->name) {
-            printf("City: %s\n", city->name);
-            printf("  Latitude:  %.6f\n", city->latitude);
-            printf("  Longitude: %.6f\n", city->longitude);
+            city->name[0] = toupper((unsigned char)city->name[0]);
+            printf("%s\n", city->name);
+            printf("Latitude:  %.6f\n", city->latitude);
+            printf("Longitude: %.6f\n", city->longitude);
             printf("-----------------------\n");
         }
         node = node->front;

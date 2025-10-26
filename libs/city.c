@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "city.h"
 #include "utils.h"
@@ -18,7 +19,9 @@ int city_init(const char* _Name, const char* _Latitude, const char* _Longitude, 
 
 	memset(_City, 0, sizeof(city_t));
 
-	_City->name = strdup(_Name);
+	const char* name_lower = create_lowercase_copy(_Name);
+
+	_City->name = strdup(name_lower);
 	if(_City->name == NULL)
 	{
 		printf("Failed to allocate memory for City name\n");
@@ -54,3 +57,4 @@ void city_dispose(city_t **_cityPtr)
 	free(_City);
 	*_cityPtr = NULL;
 }
+

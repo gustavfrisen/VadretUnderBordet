@@ -63,6 +63,11 @@ int save_weather_to_cache(const char* city_name, const char* jsonStr);
 int process_openmeteo_response(const char* api_response, char** client_response); // Used by server to process API response
 int deserialize_weather_response(const char* client_response, weather_t* weather); // Used by client to parse response
 
+// ========== Printing ==========
+int weather_print(const weather_t* weather);
+int weather_print_pretty(const weather_t* weather);
+
+// ========== Memory Management ==========
 void free_weather(weather_t* weather);
 
 #endif // WEATHER_H
