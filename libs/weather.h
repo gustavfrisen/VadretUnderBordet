@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <jansson.h>
 
-#define METEO_FORECAST_HTTPS_URL "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m"
-#define METEO_FORECAST_HTTP_URL "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current_weather=true"
+#define METEO_FORECAST_URL "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m"
 
 typedef struct {
     // Location info
@@ -65,19 +64,13 @@ int save_weather_to_cache(const char* city_name, const char* jsonStr);
 
 // ========== Serialization Functions ==========
  // Used by server to process API response
-int process_openmeteo_https_response(const char* api_response, char** client_response);
-int process_openmeteo_http_response(const char* api_response, char** client_response);
-
+int process_openmeteo_response(const char* api_response, char** client_response);
 // Used by client to parse response
-int deserialize_weather_https_response(const char* client_response, weather_t* weather);
-int deserialize_weather_http_response(const char* client_response, weather_t* weather);
+int deserialize_weather_response(const char* client_response, weather_t* weather);
 
 // ========== Printing ==========
-int weather_https_print(const weather_t* weather);
-int weather_https_print_pretty(const weather_t* weather);
-
-int weather_http_print(const weather_t* weather);
-int weather_http_print_pretty(const weather_t* weather);
+int weather_print(const weather_t* weather);
+int weather_print_pretty(const weather_t* weather);
 
 // ========== Memory Management ==========
 void free_weather(weather_t* weather);

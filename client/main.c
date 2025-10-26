@@ -22,16 +22,16 @@ int main() {
     cities_get_city_by_name(cities, "Stockholm", &city);
     if (city) {
         char url[512];
-        snprintf(url, sizeof(url), METEO_FORECAST_HTTP_URL, city->latitude, city->longitude);
+        snprintf(url, sizeof(url), METEO_FORECAST_URL, city->latitude, city->longitude);
         
         http_response_t* response;
         http_get(url, &response);
         if (response->status_code == 200) {
             char* client_response;
-            process_openmeteo_http_response(response->body, &client_response);
+            process_openmeteo_response(response->body, &client_response);
             weather_t weather;
-            deserialize_weather_http_response(client_response, &weather);
-            weather_http_print_pretty(&weather);
+            deserialize_weather_response(client_response, &weather);
+            weather_print_pretty(&weather);
             free(client_response);
         } else {
             printf("Failed to get weather data. HTTP Status: %d\n", response->status_code);
