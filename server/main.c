@@ -1,10 +1,6 @@
 #include <stdio.h>
 
-#include "cities.h"
-#include "weather.h"
-
-int main()
-{
-    
+int main() {
+    printf("Vadret Under Bordet Server is running...\n");
     return 0;
 }
