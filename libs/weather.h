@@ -72,8 +72,11 @@ int process_openmeteo_http_response(const char* api_response, char** client_resp
 int deserialize_weather_response(const char* client_response, weather_t* weather);
 
 // ========== Printing ==========
-int weather_print(const weather_t* weather);
-int weather_print_pretty(const weather_t* weather);
+int weather_https_print(const weather_t* weather);
+int weather_https_print_pretty(const weather_t* weather);
+
+int weather_http_print(const weather_t* weather);
+int weather_http_print_pretty(const weather_t* weather);
 
 // ========== Memory Management ==========
 void free_weather(weather_t* weather);

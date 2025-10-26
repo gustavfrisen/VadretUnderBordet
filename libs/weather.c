@@ -179,7 +179,7 @@ int deserialize_weather_response(const char *client_response, weather_t *weather
 
 // ========== Printing ==========
 
-int weather_print(const weather_t *weather)
+int weather_https_print(const weather_t *weather)
 {
     if (!weather) return -1;
 
@@ -196,7 +196,7 @@ int weather_print(const weather_t *weather)
     return 0;
 }
 
-int weather_print_pretty(const weather_t *weather)
+int weather_https_print_pretty(const weather_t *weather)
 {
     if (!weather) return -1;
     printf("----- Weather Report -----\n");
@@ -210,6 +210,32 @@ int weather_print_pretty(const weather_t *weather)
     printf("Precipitation: %.2f %s\n", weather->precipitation,weather->unit_precipitation ? weather->unit_precipitation : "N/A");
     printf("Wind Speed: %.2f %s\n", weather->wind_speed_10m,weather->unit_wind_speed_10m ? weather->unit_wind_speed_10m : "N/A");
     printf("--------------------------\n");
+    return 0;
+}
+
+int weather_http_print(const weather_t *weather)
+{
+    if (!weather) return -1;
+    printf("Weather Data:\n");
+    printf("  Location: (%.6f, %.6f)\n", weather->latitude, weather->longitude);
+    printf("  Timezone: %s\n", weather->timezone ? weather->timezone : "N/A");
+    printf("  Elevation: %.2f m\n", weather->elevation);
+    printf("  Current Temperature: %.2f %s\n", weather->temperature_2m, weather->unit_temperature_2m ? weather->unit_temperature_2m : "N/A");
+    printf("  Is Day: %d %s\n", weather->is_day, weather->unit_is_day ? weather->unit_is_day : "N/A");
+    printf("  Wind Speed: %.2f %s\n", weather->wind_speed_10m, weather->unit_wind_speed_10m ? weather->unit_wind_speed_10m : "N/A");
+    return 0;
+}
+
+int weather_http_print_pretty(const weather_t *weather)
+{
+    if (!weather) return -1;
+    printf("----- Weather Report -----\n");
+    printf("Location: (%.6f, %.6f)\n", weather->latitude, weather->longitude);
+    printf("Timezone: %s\n", weather->timezone ? weather->timezone : "N/A");
+    printf("Elevation: %.2f m\n", weather->elevation);
+    printf("Current Temperature: %.2f %s\n", weather->temperature_2m, weather->unit_temperature_2m ? weather->unit_temperature_2m : "N/A");
+    printf("Is Day: %d %s\n", weather->is_day,weather->unit_is_day ? weather->unit_is_day : "N/A");
+    printf("Wind Speed: %.2f %s\n", weather->wind_speed_10m,weather->unit_wind_speed_10m ? weather->unit_wind_speed_10m : "N/A");
     return 0;
 }
 
