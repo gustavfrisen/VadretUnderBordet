@@ -218,21 +218,9 @@ void tcp_handle_client(int client_fd, char *buffer) {
 
   const char *json_response = "HTTP/1.1 200 OK\r\n"
                               "Content-Type: application/json\r\n"
-                              "Content-Length: 38\r\n"
+                              "Content-Length: 39\r\n"
                               "\r\n"
                               "{\"status\":\"ok\",\"message\":\"Hello World\"}";
 
   send(client_fd, json_response, strlen(json_response), 0);
-}
-
-#include <string.h>
-#include <unistd.h>
-
-int tcp_deny_connection(int client_fd) {
-  ssize_t send_status = send(client_fd, HTTP_503_SERVICE_UNAVAILABLE,
-                             strlen(HTTP_503_SERVICE_UNAVAILABLE), 0);
-  if (send_status < 0) {
-    perror("send (deny)");
-  }
-  return 0;
 }

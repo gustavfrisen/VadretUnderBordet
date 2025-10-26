@@ -4,13 +4,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#define HTTP_503_SERVICE_UNAVAILABLE                                           \
-  "HTTP/1.1 503 Service Unavailable\r\n"                                       \
-  "Content-Type: text/plain\r\n"                                               \
-  "Connection: close\r\n"                                                      \
-  "\r\n"                                                                       \
-  "Server is busy. Try again later.\n"
-
 #define MAX_CLIENTS 3
 
 typedef struct {
