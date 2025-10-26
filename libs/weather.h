@@ -69,7 +69,8 @@ int process_openmeteo_https_response(const char* api_response, char** client_res
 int process_openmeteo_http_response(const char* api_response, char** client_response);
 
 // Used by client to parse response
-int deserialize_weather_response(const char* client_response, weather_t* weather);
+int deserialize_weather_https_response(const char* client_response, weather_t* weather);
+int deserialize_weather_http_response(const char* client_response, weather_t* weather);
 
 // ========== Printing ==========
 int weather_https_print(const weather_t* weather);

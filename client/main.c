@@ -30,7 +30,7 @@ int main() {
             char* client_response;
             process_openmeteo_http_response(response->body, &client_response);
             weather_t weather;
-            deserialize_weather_response(client_response, &weather);
+            deserialize_weather_http_response(client_response, &weather);
             weather_http_print_pretty(&weather);
             free(client_response);
         } else {
