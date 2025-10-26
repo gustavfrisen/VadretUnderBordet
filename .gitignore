@@ -61,3 +61,4 @@ dkms.conf
 build/
 cities_cache/
 weather_cache/
+backup/

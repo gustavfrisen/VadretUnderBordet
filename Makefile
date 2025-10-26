@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -g -Wall -Wextra -std=c11 -MMD -MP -Wno-format-truncation -Wno-unused-parameter -Wno-unused-function 
-LFLAGS := -lcurl
+LFLAGS := -lpthread -lm -lssl -lcrypto
 
 # Directories
 LIBS_DIR := libs

@@ -1,55 +1,57 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "gui/gui_cmd.h"
+#include <string.h>
+#include <unistd.h>  // For sleep() function
 
-int main()
-{
-restart:
-    int choice_main = menu_main();
-    switch (choice_main) {
-        case 1:
-            int choice_cm = menu_cities();
-            switch (choice_cm)
-            {
-                case 1:
-                    // Add city logic here
-                    break;
-                case 2:
-                    // Remove city logic here
-                    break;
-                case 3:
-                    // List cities logic here
-                    break;
-                case 0:
-                    // Back to main menu
-                    goto restart;
-                    break;
-                default:
-                    break;
-            }
-            break;
-        case 2:
-            int choice_wm = menu_weather();
-            switch (choice_wm)
-            {
-                case 1:
-                    // Show weather logic here
-                    break;
-                case 2:
-                    // Update weather logic here
-                    break;
-                case 0:
-                    // Back to main menu
-                    goto restart;
-                    break;
-                default:
-                    break;
-            }
-            break;
-        case 0:
-            break;
-        default:
-            break;
-    }
+#include "cities.h"
+#include "city.h"
+#include "weather.h"
+
+#include "HTTP.h"
+
+char* get_input();
+void main_menu();
+void cities_menu();
+void weather_menu();
+
+int main() {
+    
     return 0;
+}
+
+char* get_input()
+{
+    static char buffer[256];
+    if (fgets(buffer, sizeof(buffer), stdin)) {
+        buffer[strcspn(buffer, "\n")] = '\0';
+        return buffer;
+    }
+    return NULL;
+}
+
+void main_menu() {
+    system("clear");
+    printf("--Main-Menu--\n");
+    printf("1: Cities manager\n");
+    printf("2: Weather manager\n");
+    printf("0: Exit\n");
+}
+
+void cities_menu() {
+    system("clear");
+    printf("--Cities-Menu--\n");
+    printf("1: Add city\n");
+    printf("2: Remove city\n");
+    printf("3: List cities\n");
+    printf("0: Back to main menu\n");
+}
+
+void weather_menu() {
+    system("clear");
+    printf("--Weather-Menu--\n");
+    printf("1: Does weather exist?\n");
+    printf("2: Is weather stale?\n");
+    printf("3: Load weather from cache\n");
+    printf("4: Save weather to cache\n");
+    printf("0: Back to main menu\n");
 }
