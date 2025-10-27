@@ -8,6 +8,7 @@
 
 int main()
 {
+    /*
     printf("\nCLIENT: HTTP request generation\n\n");
 
     HTTPRequest* request = HTTPRequest_new(GET, "/v1/test");
@@ -65,6 +66,7 @@ int main()
         printf("Body:\n%s\n",response->body);
     }
     HTTPResponse_Dispose(&response);
+    */
 
     // LoadCities();
     // TCP_INIT();
