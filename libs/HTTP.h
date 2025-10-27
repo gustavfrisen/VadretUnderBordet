@@ -14,7 +14,7 @@ typedef enum
     Unknown = 0,
     NotInvalid = 1,
 
-    MalformedRequest = 2,
+    Malformed = 2,
     OutOfMemory = 3,
     URLTooLong = 4 // Originally existed because the URL was fixed size in the struct, but kept for extra safety
 } InvalidReason;
@@ -43,21 +43,6 @@ typedef struct {
     const char* Name;
     const char* Value;
 } HTTPHeader;
-
-// Serverside functions
-typedef struct {
-    int valid; // If false (0), then the request could not be parsed. Panic!
-    InvalidReason reason;
-
-    RequestMethod method;
-    ProtocolVersion protocol;
-    const char* URL;
-
-    LinkedList* headers;
-} HTTPRequest;
-
-HTTPRequest* ParseRequest(const char* request);
-void HTTPRequest_Dispose(HTTPRequest** request);
 
 typedef enum
 {
@@ -91,21 +76,41 @@ typedef enum
     HTTP_Version_Not_Supported = 505,
 } ResponseCode;
 
+// Serverside functions
 typedef struct {
+    int valid; // If false (0), then the request could not be parsed. Panic!
+    InvalidReason reason;
+
+    RequestMethod method;
+    ProtocolVersion protocol;
+    const char* URL;
+
+    LinkedList* headers;
+} HTTPRequest;
+
+typedef struct {
+    int valid; // If false (0), then the request could not be parsed. Panic!
+    InvalidReason reason;
+
     ResponseCode responseCode;
+    ProtocolVersion protocol;
     LinkedList* headers;
     const char* body;
 } HTTPResponse;
 
-HTTPResponse* HTTPResponse_init(ResponseCode code, const char* body);
-int HTTPResponse_add_header(HTTPResponse* response, const char* name, const char* value);
-const char* HTTPResponse_tostring(HTTPResponse** request);
+HTTPRequest* HTTPRequest_new(RequestMethod method, const char* URL);
+int HTTPRequest_add_header(HTTPRequest* response, const char* name, const char* value);
+const char* HTTPRequest_tostring(HTTPRequest* request);
 
-HTTPRequest* ParseRequest(const char* request);
+HTTPRequest* HTTPRequest_fromstring(const char* request);
 void HTTPRequest_Dispose(HTTPRequest** request);
 
-#endif
 
-// HTTP Struct
-// ParseRequest();
-// GET <request> HTTP/1.1
+HTTPResponse* HTTPResponse_new(ResponseCode code, const char* body);
+int HTTPResponse_add_header(HTTPResponse* response, const char* name, const char* value);
+const char* HTTPResponse_tostring(HTTPResponse* response);
+
+HTTPResponse* HTTPResponse_fromstring(const char* response);
+void HTTPResponse_Dispose(HTTPResponse** response);
+
+#endif
