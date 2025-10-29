@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define BUFFER 4096
+#define BUFFER 32768        // 32 KiB
 #define LISTEN_BACKLOG 1024 // max sockets in WSL2 is 4096
 
 void print_server_addresses(int port) {
@@ -115,7 +115,8 @@ int tcp_init(int server_port) {
 // returns the same fd on success and -1 on fail
 int tcp_listen_start(int server_fd, int server_port) {
   // not reasonable to do socket_fd validation, trust the caller
-  if (listen(server_fd, LISTEN_BACKLOG) < 0) {
+  if (listen(server_fd, SOMAXCONN) < 0) {
+    // SOMAXCONN set by OS, check with "cat /proc/sys/net/core/somaxconn"
     perror("listen failed");
     return -1;
   }
